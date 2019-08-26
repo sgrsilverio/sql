@@ -1,0 +1,67 @@
+Sub BuscaFornecedoresPF()
+
+Dim Cn As New ADODB.Connection
+Dim Rs As New ADODB.Recordset
+Dim StrCn As String
+Dim CodEmp As Integer
+Dim CodFil  As Integer
+Dim dataini As String
+Dim datafin As String
+Dim StrRs As String
+Dim SitLct As String
+
+
+StrCn = "Provider=SQLOLEDB.1;Persist Security Info=True;User ID=;pwd=;Data Source=CD164307SQL1;Initial Catalog=SAPIENS"
+Cn.Open StrCn
+
+dataini = Worksheets("Painel").Cells(28, 3).Text
+datafin = Worksheets("Painel").Cells(28, 4).Text
+
+StrRs = "SELECT "
+StrRs = StrRs & "A.CODEMP AS EMPRESA, "
+StrRs = StrRs & "A.CODFIL AS FILIAL, "
+StrRs = StrRs & "A.CODFOR AS CÓDIGO, "
+StrRs = StrRs & "B.NOMFOR AS NOME, "
+StrRs = StrRs & "B.TIPFOR AS TIPO_FORNECEDOR, "
+StrRs = StrRs & "A.NUMNFC AS DOCUMENTO, "
+StrRs = StrRs & "A.CODSNF AS SÉRIE, "
+StrRs = StrRs & "A.CTAFIN AS CONTA_FINANCEIRA, "
+StrRs = StrRs & "A.CTARED AS CONTA_CONTÁBIL, "
+StrRs = StrRs & "A.CODCCU CENTRO_DE_CUSTO, "
+StrRs = StrRs & "A.VLRFIN AS VALOR_FINANCEIRO "
+StrRs = StrRs & "FROM E440ISC A "
+StrRs = StrRs & "INNER JOIN E095FOR B "
+StrRs = StrRs & "ON A.CODFOR = B.CODFOR "
+StrRs = StrRs & "WHERE B.TIPFOR = 'F' AND "
+StrRs = StrRs & "A.CTARED IN ('353','354','355','358','363','365','371','372','376','631','632','895','896','897','898','899','900','437','1155','1156','1157','1158','1159','1160','1161','1162','1163','1164')"
+StrRs = StrRs & "AND A.DATGER >='" & dataini & "' and A.DATGER <= '" & datafin & "' "
+
+Rs.Open StrRs, Cn
+
+Worksheets("FornecedoresPF").Select
+Sheets("FornecedoresPF").UsedRange.ClearContents
+Sheets("FornecedoresPF").UsedRange.ClearFormats
+For i = 0 To Rs.Fields.Count - 1
+    ActiveSheet.Cells(, i + 1) = Rs.Fields(i).Name
+    Next i
+ActiveSheet.Range("A2").CopyFromRecordset Rs
+Columns.AutoFit
+Rows.AutoFit
+Worksheets("FornecedoresPF").Select
+Cells.Select
+    With Selection
+        .HorizontalAlignment = xlGeneral
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .ReadingOrder = xlContext
+        .MergeCells = False
+    End With
+    Range("A1").Select
+Rs.Close
+
+
+End Sub

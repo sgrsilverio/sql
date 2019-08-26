@@ -1,0 +1,77 @@
+Sub NfVendas()
+
+Dim Cn As New ADODB.Connection
+Dim Rs As New ADODB.Recordset
+Dim StrCn As String
+Dim CodEmp As Integer
+Dim CodFil  As Integer
+Dim dataini As String
+Dim datafin As String
+Dim StrRs As String
+
+StrCn = "Provider=SQLOLEDB.1;Persist Security Info=True;User ID=;pwd=;Data Source=CD164307SQL1;Initial Catalog=SAPIENS"
+Cn.Open StrCn
+
+CodEmp = Worksheets("Painel").Cells(17, 1).Text
+CodFil = Worksheets("Painel").Cells(17, 2).Text
+dataini = Worksheets("Painel").Cells(17, 3).Text
+datafin = Worksheets("Painel").Cells(17, 4).Text
+
+StrRs = "Select i.codemp as Empresa,  "
+StrRs = StrRs & " i.codfil as Filial, "
+StrRs = StrRs & " i.numnfv as Nota_Fiscal, "
+StrRs = StrRs & " i.codsnf as Série, "
+StrRs = StrRs & " i.codfam as Família, "
+StrRs = StrRs & " i.tnsser as Transação, "
+StrRs = StrRs & " i.numped as Pedido, "
+StrRs = StrRs & " i.numctr as Contrato, "
+StrRs = StrRs & " i.codser as Serviço, "
+StrRs = StrRs & " i.cplisv as Complemento, "
+StrRs = StrRs & " i.ctafin as Conta_Financeira, "
+StrRs = StrRs & " i.ctared as Conta_Reduzida, "
+StrRs = StrRs & " i.codccu as Centro_Custo, "
+StrRs = StrRs & " i.vlrbru as Valor_Bruto, "
+StrRs = StrRs & " i.vlriss as Valor_ISS, "
+StrRs = StrRs & " i.vlrbpf as Base_PIS, "
+StrRs = StrRs & " i.vlrpif as Valor_PIS, "
+StrRs = StrRs & " i.vlrbcf as Base_COFINS, "
+StrRs = StrRs & " i.vlrcff as Valor_Cofins, "
+StrRs = StrRs & " i.cstpis as CSTPIS, "
+StrRs = StrRs & " i.cstcof as CSTCOF, "
+StrRs = StrRs & " n.datemi as Emissão, "
+StrRs = StrRs & " n.sitnfv as Situação"
+StrRs = StrRs & " from e140isv i join e140nfv n "
+StrRs = StrRs & " on i.codemp=n.codemp and i.codfil=n.codfil and i.numnfv=n.numnfv and i.codsnf=n.codsnf "
+StrRs = StrRs & " where i.codemp = '" & CodEmp & "'"
+StrRs = StrRs & " and i.codfil = '" & CodFil & "' " & " and n.datemi<='" & datafin & "' and datemi>='" & dataini & "'"
+StrRs = StrRs & " and n.sitnfv = '2' order by n.datemi DESC"
+
+Rs.Open StrRs, Cn
+
+Worksheets("Nfs").Select
+Sheets("Nfs").UsedRange.ClearContents
+For i = 0 To Rs.Fields.Count - 1
+    ActiveSheet.Cells(, i + 1) = Rs.Fields(i).Name
+    Next i
+ActiveSheet.Range("A2").CopyFromRecordset Rs
+Columns.AutoFit
+Rows.AutoFit
+Worksheets("Nfs").Select
+Cells.Select
+    With Selection
+        .HorizontalAlignment = xlGeneral
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .ReadingOrder = xlContext
+        .MergeCells = False
+    End With
+    Range("A1").Select
+
+Rs.Close
+
+
+End Sub

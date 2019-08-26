@@ -1,0 +1,94 @@
+Sub contasRecber()
+
+
+Dim Cn As New ADODB.Connection
+Dim Rs As New ADODB.Recordset
+Dim StrCn As String
+Dim CodEmp As Integer
+Dim CodFil  As Integer
+Dim data As String
+Dim codcli As Integer
+Dim StrRs As String
+
+
+
+StrCn = "Provider=SQLOLEDB.1;Persist Security Info=True;User ID=;pwd=;Data Source=CD164307SQL1;Initial Catalog=SAPIENS"
+Cn.Open StrCn
+
+CodEmp = Worksheets("Painel").Cells(6, 1).Text
+CodFil = Worksheets("Painel").Cells(6, 2).Text
+data = Worksheets("Painel").Cells(6, 3).Text
+codcli = 1
+
+StrRs = "select f.codemp as Empresa,"
+StrRs = StrRs & " f.codfil as Filial, e.*,"
+StrRs = StrRs & " f.codcli as Código_Cliente,"
+StrRs = StrRs & " f.datent as Emissão,"
+StrRs = StrRs & " f.vctpro as Vencimento,"
+StrRs = StrRs & " CAST(f.ultpgt as datetime) as Último_Pagamento,"
+StrRs = StrRs & " f.sittit as Situação,"
+StrRs = StrRs & " h.nomcli as Nome, "
+StrRs = StrRs & " f.obstcr as Observação"
+StrRs = StrRs & " from ("
+StrRs = StrRs & " select numtit as Título, "
+StrRs = StrRs & " codtpt as Tipo,"
+StrRs = StrRs & " Saldo from ( "
+StrRs = StrRs & "select numtit,codtpt,sum(valor_mov) as Saldo from ("
+StrRs = StrRs & "select a.numtit, a.seqmov, a.codtpt,a.vlrmov, "
+StrRs = StrRs & " case b.recdec "
+StrRs = StrRs & " when '3' then a.vlrmov*(-1) "
+StrRs = StrRs & " when '4' then a.vlrmov*(-1) "
+StrRs = StrRs & " Else" & " a.vlrmov "
+StrRs = StrRs & " end as valor_mov "
+StrRs = StrRs & " from e301mcr a "
+StrRs = StrRs & " inner join e001tns b "
+StrRs = StrRs & " on a.codtns=b.codtns and a.codemp=b.codemp and b.codemp='" & CodEmp & "'"
+StrRs = StrRs & " where a.codemp='" & CodEmp & "'" & " and a.codfil ='" & CodFil & "'" & " and b.codemp='" & CodEmp & "'" & " and datmov<='" & data & "'" & " and a.vlrmov > 0 ) "
+StrRs = StrRs & " as c group by numtit, codtpt) "
+StrRs = StrRs & " as d where Saldo > 0 ) "
+StrRs = StrRs & " as e "
+StrRs = StrRs & "inner join e301tcr f "
+StrRs = StrRs & "on f.codtpt = e.Tipo and f.numtit = e.Título and f.codemp='" & CodEmp & "'" & " and f.codfil='" & CodFil & "' "
+StrRs = StrRs & "inner join e002htt g "
+StrRs = StrRs & "on e.Tipo=g.codtpt and g.codemp='" & CodEmp & "' "
+StrRs = StrRs & "inner join e085cli h "
+StrRs = StrRs & "on f.codcli=h.codcli where Tipo not in ('SE1','SE2','ALR','EQP','ADT','CAU','DEP') "
+StrRs = StrRs & "order by Título"
+
+Rs.Open StrRs, Cn
+
+Worksheets("Clientes").Select
+Sheets("Clientes").UsedRange.ClearContents
+For i = 0 To Rs.Fields.Count - 1
+    ActiveSheet.Cells(, i + 1) = Rs.Fields(i).Name
+    Next i
+ActiveSheet.Range("A2").CopyFromRecordset Rs
+
+UltimaLinha = Worksheets("Clientes").Cells(Rows.Count, 9).End(xlUp).Row
+
+For i = 2 To UltimaLinha
+    If (Worksheets("Clientes").Cells(i, 9).Text) = "31/12/1900" Then
+        Worksheets("Clientes").Cells(i, 9).Value = ""
+    End If
+Next i
+
+Cells.Select
+    With Selection
+        .HorizontalAlignment = xlGeneral
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .ReadingOrder = xlContext
+        .MergeCells = False
+    End With
+
+Worksheets("Clientes").Select
+
+
+Rs.Close
+
+End Sub
+

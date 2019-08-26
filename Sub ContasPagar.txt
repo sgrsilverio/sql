@@ -1,0 +1,93 @@
+Sub contasPagar()
+
+Dim Cn As New ADODB.Connection
+Dim Rs As New ADODB.Recordset
+Dim StrCn As String
+Dim CodEmp As Integer
+Dim CodFil  As Integer
+Dim data As String
+Dim codcli As Integer
+Dim StrRs As String
+
+
+
+StrCn = "Provider=SQLOLEDB.1;Persist Security Info=True;User ID=;pwd=;Data Source=CD164307SQL1;Initial Catalog=SAPIENS"
+Cn.Open StrCn
+
+CodEmp = Worksheets("Painel").Cells(6, 1).Text
+CodFil = Worksheets("Painel").Cells(6, 2).Text
+data = Worksheets("Painel").Cells(6, 3).Text
+codcli = 1
+
+StrRs = "select f.codemp as Empresa, "
+StrRs = StrRs & " f.codfil as Filial,"
+StrRs = StrRs & " e.*, "
+StrRs = StrRs & " f.datent as Emissão, "
+StrRs = StrRs & " f.vctpro as Vencimento, "
+StrRs = StrRs & " f.ultpgt as Pagamento, "
+StrRs = StrRs & " f.sittit as Situção, "
+StrRs = StrRs & " f.numnfc as NotaFiscal, "
+StrRs = StrRs & " g.ctardv as CtaRedTítulo, "
+StrRs = StrRs & " h.nomfor as Fornecedor, "
+StrRs = StrRs & " f.obstcp as Observação from ( "
+StrRs = StrRs & "select numtit, codtpt, codfor, vlrabe from ("
+StrRs = StrRs & "select numtit,codtpt,codfor, sum(valor_mov) as vlrabe from ("
+StrRs = StrRs & "select a.numtit, a.seqmov, a.codtpt,a.vlrmov,a.codfor, "
+StrRs = StrRs & "Case b.pagdec "
+StrRs = StrRs & "when '3' then a.vlrmov*(-1) "
+StrRs = StrRs & "when '4' then a.vlrmov*(-1) "
+StrRs = StrRs & "Else " & "a.vlrmov "
+StrRs = StrRs & "end As valor_mov "
+StrRs = StrRs & "from e501mcp a "
+StrRs = StrRs & "inner join e001tns b "
+StrRs = StrRs & "on a.codtns=b.codtns and a.codemp=b.codemp and b.codemp=" & "'" & CodEmp & "'"
+StrRs = StrRs & "where a.codemp=" & "'" & CodEmp & "'" & "and a.codfil=" & "'" & CodFil & "'" & "and b.codemp =" & "'" & CodEmp & "'" & " and datmov <=" & "'" & data & "'" & " and a.vlrmov > 0) "
+StrRs = StrRs & "as c group by codfor, numtit, codtpt) "
+StrRs = StrRs & "as d where vlrabe > 0) "
+StrRs = StrRs & "as e "
+StrRs = StrRs & "inner join e501tcp f "
+StrRs = StrRs & "on f.codtpt = e.codtpt and f.numtit = e.numtit and f.codfor = e.codfor and f.codemp =" & "'" & CodEmp & "'" & "and f.codfil =" & "'" & CodFil & "'"
+StrRs = StrRs & "inner join e002htt g "
+StrRs = StrRs & "on e.codtpt=g.codtpt and g.codemp =" & "'" & CodEmp & "'"
+StrRs = StrRs & "inner join e095for h "
+StrRs = StrRs & "on f.codfor=h.codfor where e.codtpt in('DUP','SRV','ANT','RMC','REE','FX','MAN')"
+StrRs = StrRs & "order by numtit"
+
+
+Rs.Open StrRs, Cn
+
+Worksheets("Fornecedores").Select
+Sheets("Fornecedores").UsedRange.ClearContents
+
+For i = 0 To Rs.Fields.Count - 1
+    ActiveSheet.Cells(, i + 1) = Rs.Fields(i).Name
+    Next i
+ActiveSheet.Range("A2").CopyFromRecordset Rs
+
+UltimaLinha = Worksheets("Fornecedores").Cells(Rows.Count, 9).End(xlUp).Row
+
+For i = 2 To UltimaLinha
+    If (Worksheets("Fornecedores").Cells(i, 9).Text) = "31/12/1900" Then
+        Worksheets("Fornecedores").Cells(i, 9).Value = ""
+    End If
+Next i
+
+Cells.Select
+    With Selection
+        .HorizontalAlignment = xlGeneral
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .ReadingOrder = xlContext
+        .MergeCells = False
+    End With
+
+
+Worksheets("Fornecedores").Select
+
+Rs.Close
+
+End Sub
